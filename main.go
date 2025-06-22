@@ -8,9 +8,7 @@ import (
 
 var cbPath string = "~/.cx/clipboard"
 
-func cut(file string, cbPath string) {
-	cbFile := cbFile(cbPath, file)
-
+func cut(file string, cbFile string) {
 	fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
 
 	err := os.Link(file, cbFile)
@@ -76,21 +74,23 @@ func main() {
 	cbPath = expandHomeDir(cbPath)
 
 	arg := os.Args
-	file := arg[1]
+	files := arg[1:]
 
-	if fileExists(file) {
-		// cut
-		cut(file, cbPath)
-		return
+	for _, file := range files {
+		cbFile := cbFile(cbPath, file)
+
+		if fileExists(file) {
+			// cut
+			cut(file, cbFile)
+			continue
+		}
+
+		if fileExists(cbFile) {
+			// paste
+			paste(cbFile, file)
+			continue
+		}
+
+		fmt.Printf("Error: %s not found in current dir or clipboard\n", file)
 	}
-
-	cbFile := cbFile(cbPath, file)
-
-	if fileExists(cbFile) {
-		// paste
-		paste(cbFile, file)
-		return
-	}
-
-	fmt.Printf("Error: %s not found in current dir or clipboard", file)
 }
