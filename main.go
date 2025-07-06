@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"strings"
@@ -73,8 +74,22 @@ func fileExists(path string) bool {
 func main() {
 	cbPath = expandHomeDir(cbPath)
 
-	arg := os.Args
-	files := arg[1:]
+	all := flag.Bool("a", false, "paste all clipboard files into current dir")
+	flag.Parse()
+
+	var files []string
+	if *all {
+		entries, err := os.ReadDir(cbPath)
+		if err != nil {
+			panic(err)
+		}
+		for _, e := range entries {
+			files = append(files, e.Name())
+		}
+	} else {
+		arg := flag.Args()
+		files = arg[0:]
+	}
 
 	for _, file := range files {
 		cbFile := cbFile(cbPath, file)
