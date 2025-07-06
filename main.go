@@ -10,6 +10,7 @@ import (
 var cbPath string = "~/.cx/clipboard"
 
 func cut(file string, cbFile string) {
+
 	fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
 
 	err := os.Link(file, cbFile)
@@ -71,6 +72,20 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
+func relativeFile(absFile string) (string, error) {
+	wd, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	relFile, isRelative := strings.CutPrefix(absFile, wd+"/")
+	if !isRelative {
+		return "", fmt.Errorf("%s is not a relative file in current working dir %s", absFile, wd)
+	}
+
+	return relFile, nil
+}
+
 func main() {
 	cbPath = expandHomeDir(cbPath)
 
@@ -92,6 +107,16 @@ func main() {
 	}
 
 	for _, file := range files {
+		fmt.Println(file)
+		if strings.HasPrefix(file, "/") {
+			relFile, err := relativeFile(file)
+			file = relFile
+			fmt.Println(relFile)
+			if err != nil {
+				panic(err)
+			}
+		}
+
 		cbFile := cbFile(cbPath, file)
 
 		if fileExists(file) {
