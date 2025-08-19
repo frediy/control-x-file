@@ -10,9 +10,6 @@ import (
 var cbPath string = "~/.cx/clipboard"
 
 func cut(file string, cbFile string) {
-
-	fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
-
 	err := os.Link(file, cbFile)
 	if err != nil {
 		panic(err)
@@ -26,8 +23,6 @@ func cut(file string, cbFile string) {
 
 func paste(cbFile string, file string) {
 	// get relative path
-	fmt.Printf("paste %s %s\n", abbreviateHomeDir(cbFile), file)
-
 	err := os.Link(cbFile, file)
 	if err != nil {
 		panic(err)
@@ -86,14 +81,39 @@ func relativeFile(absFile string) (string, error) {
 	return relFile, nil
 }
 
+func getWdPath() string {
+	wd, err := os.Getwd()
+	if err != nil {
+		panic(err)
+	}
+	return wd
+}
+
+func ensureDestinationPath(basePath string, file string) {
+	// full path path without file
+	pathComponents := strings.Split(file, "/")
+	pathComponents = pathComponents[0 : len(pathComponents)-1]
+	path := strings.Join(pathComponents, "/")
+	fullPath := basePath + "/" + path
+
+	// create if not exists
+	_, err := os.Stat(fullPath)
+	if err != nil {
+
+		os.MkdirAll(fullPath, 0777)
+	}
+}
+
 func main() {
 	cbPath = expandHomeDir(cbPath)
+	wdPath := getWdPath()
 
 	all := flag.Bool("a", false, "paste all clipboard files into current dir")
 	flag.Parse()
 
 	var files []string
 	if *all {
+		// TODO: support pasting -a when subdirs exist on clipboard
 		entries, err := os.ReadDir(cbPath)
 		if err != nil {
 			panic(err)
@@ -107,11 +127,9 @@ func main() {
 	}
 
 	for _, file := range files {
-		fmt.Println(file)
 		if strings.HasPrefix(file, "/") {
 			relFile, err := relativeFile(file)
 			file = relFile
-			fmt.Println(relFile)
 			if err != nil {
 				panic(err)
 			}
@@ -121,12 +139,16 @@ func main() {
 
 		if fileExists(file) {
 			// cut
+			fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
+			ensureDestinationPath(cbPath, file)
 			cut(file, cbFile)
 			continue
 		}
 
 		if fileExists(cbFile) {
 			// paste
+			fmt.Printf("paste %s %s\n", abbreviateHomeDir(cbFile), file)
+			ensureDestinationPath(wdPath, file)
 			paste(cbFile, file)
 			continue
 		}
