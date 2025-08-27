@@ -111,6 +111,20 @@ func ensureDestinationPath(basePath string, file string) {
 		os.MkdirAll(fullPath, 0777)
 	}
 }
+
+func printClipboardPaths(cbPath string) {
+	err := filepath.WalkDir(cbPath, func(cipath string, d fs.DirEntry, err error) error {
+		if cipath != cbPath {
+			rpath := relpathFromClipboardFile(cbPath, cipath)
+			fmt.Println(rpath)
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
 func cutToClipboard(cbFile string, file string, keepSource bool) {
 	if pathIsDir(file) {
 		err := filepath.WalkDir(file, func(ipath string, d fs.DirEntry, err error) error {
@@ -162,6 +176,7 @@ func main() {
 
 	all := flag.BoolP("all", "a", false, "paste all clipboard paths into current dir")
 	keep := flag.BoolP("keep", "k", false, "keep paths in workdir after cut and in clipboard after paste")
+	list := flag.BoolP("list", "l", false, "list all paths in clipboard")
 	help := flag.BoolP("help", "h", false, "show help")
 
 	flag.Usage = func() {
@@ -188,7 +203,7 @@ func main() {
 	arg := flag.Args()
 	files = arg[0:]
 
-	if (len(files) == 0 && !*all) || *help {
+	if (len(files) == 0 && !*all && !*list) || *help {
 		flag.Usage()
 		os.Exit(0)
 	}
@@ -231,5 +246,9 @@ func main() {
 		}
 
 		fmt.Printf("Error: %s not found in current dir or clipboard\n", file)
+	}
+
+	if *list {
+		printClipboardPaths(cbPath)
 	}
 }
