@@ -108,6 +108,45 @@ func ensureDestinationPath(basePath string, file string) {
 		os.MkdirAll(fullPath, 0777)
 	}
 }
+func cutToClipboard(cbFile string, file string) {
+	if pathIsDir(file) {
+		err := filepath.WalkDir(file, func(ipath string, d fs.DirEntry, err error) error {
+			if !d.IsDir() {
+				cipath := clipboardFile(cbPath, ipath)
+				ensureDestinationPath(cbPath, ipath)
+				cut(ipath, cipath)
+			}
+			return nil
+		})
+		if err != nil {
+			panic(err)
+		}
+		os.RemoveAll(file)
+	} else {
+		ensureDestinationPath(cbPath, file)
+		cut(file, cbFile)
+	}
+}
+
+func pasteFromClipboard(cbFile string, wdPath string, file string) {
+	if pathIsDir(cbFile) {
+		err := filepath.WalkDir(cbFile, func(cipath string, d fs.DirEntry, err error) error { // should iterate over cipath, not ipath
+			if !d.IsDir() {
+				rpath := relpathFromClipboardFile(cbPath, cipath)
+				ensureDestinationPath(wdPath, rpath)
+				cut(cipath, rpath)
+			}
+			return nil
+		})
+		if err != nil {
+			panic(err)
+		}
+		os.RemoveAll(cbFile)
+	} else {
+		ensureDestinationPath(wdPath, file)
+		cut(cbFile, file)
+	}
+}
 
 func main() {
 	cbPath = expandHomeDir(cbPath)
@@ -116,16 +155,24 @@ func main() {
 	all := flag.Bool("a", false, "paste all clipboard files into current dir")
 	flag.Parse()
 
+	// TODO: support clashes between clipboard and wd link fails with panic
+	// TODO: add clipoard --clear
+	// TODO: add clipoard --list
+
 	var files []string
+
 	if *all {
-		// TODO: support pasting -a when subdirs exist on clipboard
 		entries, err := os.ReadDir(cbPath)
+
 		if err != nil {
 			panic(err)
 		}
 		for _, e := range entries {
-			files = append(files, e.Name())
+			file := e.Name()
+			cbFile := clipboardFile(cbPath, file)
+			pasteFromClipboard(cbFile, wdPath, file)
 		}
+
 	} else {
 		arg := flag.Args()
 		files = arg[0:]
@@ -143,66 +190,12 @@ func main() {
 		cbFile := clipboardFile(cbPath, file)
 
 		if pathExists(file) {
-			// fmt.Println(pathExists(file))
-			if pathIsDir(file) {
-				// fmt.Println(pathIsDir(file))
-				err := filepath.WalkDir(file, func(ipath string, d fs.DirEntry, err error) error {
-					// fmt.Println(ipath, d.IsDir())
-					if !d.IsDir() {
-						cipath := clipboardFile(cbPath, ipath)
-						// fmt.Printf("cut %s %s\n", ipath, abbreviateHomeDir(cipath))
-						ensureDestinationPath(cbPath, ipath)
-						cut(ipath, cipath)
-					}
-					return nil
-				})
-				if err != nil {
-					panic(err)
-				}
-				// fmt.Println("os.Remove " + file)
-				os.RemoveAll(file)
-			} else {
-				// cut
-				// fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
-				ensureDestinationPath(cbPath, file)
-				cut(file, cbFile)
-			}
+			cutToClipboard(cbFile, file)
 			continue
 		}
 
 		if pathExists(cbFile) {
-			// fmt.Println(pathExists(cbFile))
-			if pathIsDir(cbFile) {
-				// fmt.Println(pathIsDir(cbFile))
-				err := filepath.WalkDir(cbFile, func(cipath string, d fs.DirEntry, err error) error { // should iterate over cipath, not ipath
-					// TODO: write method to convert clipboardFile to relativePath and call on cipath to get ipath
-					// fmt.Println(cipath, d.IsDir())
-					if !d.IsDir() {
-						// fmt.Println(cipath)
-						// cipath := clipboardFile(cbPath, ipath)
-						rpath := relpathFromClipboardFile(cbPath, cipath)
-						// fmt.Println("-")
-						// fmt.Println(cipath)
-						// fmt.Println(abbreviateHomeDir(cipath))
-						// fmt.Println(rpath)
-						// fmt.Printf("paste %s %s\n", abbreviateHomeDir(cipath), rpath)
-						// fmt.Println("-")
-						ensureDestinationPath(wdPath, rpath)
-						cut(cipath, rpath)
-					}
-					return nil
-				})
-				if err != nil {
-					panic(err)
-				}
-				// fmt.Println("os.Remove " + cbFile)
-				os.RemoveAll(cbFile)
-			} else {
-				// cut
-				// fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
-				ensureDestinationPath(wdPath, file)
-				cut(cbFile, file)
-			}
+			pasteFromClipboard(cbFile, wdPath, file)
 			continue
 		}
 
