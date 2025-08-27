@@ -152,12 +152,23 @@ func main() {
 	cbPath = expandHomeDir(cbPath)
 	wdPath := getWdPath()
 
-	all := flag.Bool("a", false, "paste all clipboard files into current dir")
+	all := flag.Bool("a", false, "paste all clipboard paths into current dir")
+
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [<options>] [<path>...]\n", os.Args[0])
+		fmt.Fprintf(os.Stderr, "\n  Detectes whether [<path>...] is in current dir or clipboard.")
+		fmt.Fprintf(os.Stderr, "\n  Cuts [<path>...] in current dir recursively to clipboard.")
+		fmt.Fprintf(os.Stderr, "\n  Pastes [<path>...] recursively from clipboard to current dir.\n")
+		fmt.Fprintln(os.Stderr, "\noptions:")
+		flag.PrintDefaults()
+	}
+
 	flag.Parse()
 
+	// TODO: ensure clipboard path exists
 	// TODO: support clashes between clipboard and wd link fails with panic
-	// TODO: add clipoard --clear
-	// TODO: add clipoard --list
+	// TODO: add clipoard -d to delete all clipboard contents
+	// TODO: add clipoard -l to list files
 
 	var files []string
 
@@ -172,11 +183,14 @@ func main() {
 			cbFile := clipboardFile(cbPath, file)
 			pasteFromClipboard(cbFile, wdPath, file)
 		}
-
-	} else {
-		arg := flag.Args()
-		files = arg[0:]
+		os.Exit(0)
 	}
+
+	// TODO: add clipoard -p for enforce paste
+	// TODO: add clipoard -c for enforce cut
+
+	arg := flag.Args()
+	files = arg[0:]
 
 	for _, file := range files {
 		if strings.HasPrefix(file, "/") {
