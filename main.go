@@ -27,6 +27,10 @@ func clipboardFile(cbPath string, file string) string {
 	return fmt.Sprintf("%s/%s", cbPath, file)
 }
 
+func relpathFromClipboardFile(cbPath, file string) string {
+	return strings.Replace(file, cbPath+"/", "", 1)
+}
+
 func workdirFile(wdPath string, file string) string {
 	return fmt.Sprintf("%s/%s", wdPath, file)
 }
@@ -139,14 +143,14 @@ func main() {
 		cbFile := clipboardFile(cbPath, file)
 
 		if pathExists(file) {
-			fmt.Println(pathExists(file))
+			// fmt.Println(pathExists(file))
 			if pathIsDir(file) {
-				fmt.Println(pathIsDir(file))
+				// fmt.Println(pathIsDir(file))
 				err := filepath.WalkDir(file, func(ipath string, d fs.DirEntry, err error) error {
-					fmt.Println(ipath, d.IsDir())
+					// fmt.Println(ipath, d.IsDir())
 					if !d.IsDir() {
 						cipath := clipboardFile(cbPath, ipath)
-						fmt.Printf("cut %s %s\n", ipath, abbreviateHomeDir(cipath))
+						// fmt.Printf("cut %s %s\n", ipath, abbreviateHomeDir(cipath))
 						ensureDestinationPath(cbPath, ipath)
 						cut(ipath, cipath)
 					}
@@ -155,11 +159,11 @@ func main() {
 				if err != nil {
 					panic(err)
 				}
-				fmt.Println("os.Remove " + file)
+				// fmt.Println("os.Remove " + file)
 				os.RemoveAll(file)
 			} else {
 				// cut
-				fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
+				// fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
 				ensureDestinationPath(cbPath, file)
 				cut(file, cbFile)
 			}
@@ -167,29 +171,35 @@ func main() {
 		}
 
 		if pathExists(cbFile) {
-			fmt.Println(pathExists(cbFile))
+			// fmt.Println(pathExists(cbFile))
 			if pathIsDir(cbFile) {
-				fmt.Println(pathIsDir(cbFile))
-				err := filepath.WalkDir(cbFile, func(ipath string, d fs.DirEntry, err error) error { // should iterate over cipath, not ipath
+				// fmt.Println(pathIsDir(cbFile))
+				err := filepath.WalkDir(cbFile, func(cipath string, d fs.DirEntry, err error) error { // should iterate over cipath, not ipath
 					// TODO: write method to convert clipboardFile to relativePath and call on cipath to get ipath
-					fmt.Println(ipath, d.IsDir())
+					// fmt.Println(cipath, d.IsDir())
 					if !d.IsDir() {
-						fmt.Println(ipath)
-						cipath := clipboardFile(cbPath, ipath)
-						fmt.Printf("paste %s %s\n", abbreviateHomeDir(cipath), ipath)
-						ensureDestinationPath(wdPath, ipath)
-						cut(cipath, ipath)
+						// fmt.Println(cipath)
+						// cipath := clipboardFile(cbPath, ipath)
+						rpath := relpathFromClipboardFile(cbPath, cipath)
+						// fmt.Println("-")
+						// fmt.Println(cipath)
+						// fmt.Println(abbreviateHomeDir(cipath))
+						// fmt.Println(rpath)
+						// fmt.Printf("paste %s %s\n", abbreviateHomeDir(cipath), rpath)
+						// fmt.Println("-")
+						ensureDestinationPath(wdPath, rpath)
+						cut(cipath, rpath)
 					}
 					return nil
 				})
 				if err != nil {
 					panic(err)
 				}
-				fmt.Println("os.Remove " + file)
-				os.RemoveAll(file)
+				// fmt.Println("os.Remove " + cbFile)
+				os.RemoveAll(cbFile)
 			} else {
 				// cut
-				fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
+				// fmt.Printf("cut %s %s\n", file, abbreviateHomeDir(cbFile))
 				ensureDestinationPath(wdPath, file)
 				cut(cbFile, file)
 			}
