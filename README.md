@@ -1,3 +1,5 @@
+<img class="badge" tag="github.com/frediy/control-x-file" src="/badge/github.com/frediy/control-x-file">
+
 # control-x-file
 CLI clipboard tool for cutting and pasting recursive paths or files with original path restoration.
 
