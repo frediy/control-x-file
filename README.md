@@ -14,7 +14,6 @@ options:
 ```
 
 ## Installation
-Build
 ```
   # clone
   git clone https://github.com/frediy/control-x-file
