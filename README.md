@@ -11,6 +11,7 @@ Usage: cx [<options>] [<path>...]
 
 options:
   -a	paste all clipboard paths into current dir
+  -k	keep paths in workdir after cut and in clipboard after paste
 ```
 
 ## Installation
@@ -20,6 +21,7 @@ options:
 
   # build
   cd control-x-file
+  go mod tidy
   go build -o "bin/cx" .
 
   # update path in .bashrc or .zshrc

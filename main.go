@@ -1,25 +1,28 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
+
+	flag "github.com/spf13/pflag"
 )
 
 var cbPath string = "~/.cx/clipboard"
 
-func cut(fromFile string, toFile string) {
+func cut(fromFile string, toFile string, keepFromFile bool) {
 	err := os.Link(fromFile, toFile)
 	if err != nil {
 		panic(err)
 	}
 
-	err = os.Remove(fromFile)
-	if err != nil {
-		panic(err)
+	if !keepFromFile {
+		err = os.Remove(fromFile)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
@@ -108,43 +111,48 @@ func ensureDestinationPath(basePath string, file string) {
 		os.MkdirAll(fullPath, 0777)
 	}
 }
-func cutToClipboard(cbFile string, file string) {
+func cutToClipboard(cbFile string, file string, keepSource bool) {
 	if pathIsDir(file) {
 		err := filepath.WalkDir(file, func(ipath string, d fs.DirEntry, err error) error {
 			if !d.IsDir() {
 				cipath := clipboardFile(cbPath, ipath)
 				ensureDestinationPath(cbPath, ipath)
-				cut(ipath, cipath)
+				cut(ipath, cipath, keepSource)
 			}
 			return nil
 		})
 		if err != nil {
 			panic(err)
 		}
-		os.RemoveAll(file)
+		if !keepSource {
+			os.RemoveAll(file)
+		}
 	} else {
 		ensureDestinationPath(cbPath, file)
-		cut(file, cbFile)
+		cut(file, cbFile, keepSource)
 	}
 }
 
-func pasteFromClipboard(cbFile string, wdPath string, file string) {
+func pasteFromClipboard(cbFile string, wdPath string, file string, keepSource bool) {
 	if pathIsDir(cbFile) {
 		err := filepath.WalkDir(cbFile, func(cipath string, d fs.DirEntry, err error) error { // should iterate over cipath, not ipath
 			if !d.IsDir() {
 				rpath := relpathFromClipboardFile(cbPath, cipath)
 				ensureDestinationPath(wdPath, rpath)
-				cut(cipath, rpath)
+				cut(cipath, rpath, keepSource)
 			}
 			return nil
 		})
 		if err != nil {
 			panic(err)
 		}
-		os.RemoveAll(cbFile)
+		if !keepSource {
+			os.RemoveAll(cbFile)
+		}
+
 	} else {
 		ensureDestinationPath(wdPath, file)
-		cut(cbFile, file)
+		cut(cbFile, file, keepSource)
 	}
 }
 
@@ -152,7 +160,9 @@ func main() {
 	cbPath = expandHomeDir(cbPath)
 	wdPath := getWdPath()
 
-	all := flag.Bool("a", false, "paste all clipboard paths into current dir")
+	all := flag.BoolP("all", "a", false, "paste all clipboard paths into current dir")
+	keep := flag.BoolP("keep", "k", false, "keep paths in workdir after cut and in clipboard after paste")
+	help := flag.BoolP("help", "h", false, "show help")
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [<options>] [<path>...]\n", os.Args[0])
@@ -166,11 +176,24 @@ func main() {
 	flag.Parse()
 
 	// TODO: ensure clipboard path exists
-	// TODO: support clashes between clipboard and wd link fails with panic
+	// TODO: support overwrite clashes between clipboard and wd link fails with panic
 	// TODO: add clipoard -d to delete all clipboard contents
 	// TODO: add clipoard -l to list files
 
+	// TODO: add clipoard -p for enforce paste
+	// TODO: add clipoard -c for enforce cut
+
 	var files []string
+
+	arg := flag.Args()
+	files = arg[0:]
+
+	if (len(files) == 0 && !*all) || *help {
+		flag.Usage()
+		os.Exit(0)
+	}
+
+	keepSource := *keep
 
 	if *all {
 		entries, err := os.ReadDir(cbPath)
@@ -181,16 +204,10 @@ func main() {
 		for _, e := range entries {
 			file := e.Name()
 			cbFile := clipboardFile(cbPath, file)
-			pasteFromClipboard(cbFile, wdPath, file)
+			pasteFromClipboard(cbFile, wdPath, file, keepSource)
 		}
 		os.Exit(0)
 	}
-
-	// TODO: add clipoard -p for enforce paste
-	// TODO: add clipoard -c for enforce cut
-
-	arg := flag.Args()
-	files = arg[0:]
 
 	for _, file := range files {
 		if strings.HasPrefix(file, "/") {
@@ -204,12 +221,12 @@ func main() {
 		cbFile := clipboardFile(cbPath, file)
 
 		if pathExists(file) {
-			cutToClipboard(cbFile, file)
+			cutToClipboard(cbFile, file, keepSource)
 			continue
 		}
 
 		if pathExists(cbFile) {
-			pasteFromClipboard(cbFile, wdPath, file)
+			pasteFromClipboard(cbFile, wdPath, file, keepSource)
 			continue
 		}
 
