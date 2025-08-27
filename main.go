@@ -181,7 +181,7 @@ func main() {
 
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage: %s [<options>] [<path>...]\n", os.Args[0])
-		fmt.Fprintf(os.Stderr, "\n  Detectes whether [<path>...] is in current dir or clipboard.")
+		fmt.Fprintf(os.Stderr, "\n  Detects whether [<path>...] is in current dir or clipboard.")
 		fmt.Fprintf(os.Stderr, "\n  Cuts [<path>...] in current dir recursively to clipboard.")
 		fmt.Fprintf(os.Stderr, "\n  Pastes [<path>...] recursively from clipboard to current dir.\n")
 		fmt.Fprintln(os.Stderr, "\noptions:")
