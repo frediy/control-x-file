@@ -8,16 +8,18 @@ No need to remember paths that no longer exist when calling `git restore`. Avoid
 **Use case: Restore hard to remember files fast**
 ```bash
 # cut
-~/my-repo $ git checkout branch-with-good-stuff
+~/my-repo $ git checkout branch-with-paths
 ~/my-repo $ cx src/deep/into/the/module/space/SomeObscureClassWithLongName.code
 ~/my-repo $ cx src/deep/into/another/part/of/the/module/space/SomeEvenMoreObscureClassWithLongName.code
 
-~/my-repo $ git checkout feature-branch
+~/my-repo $ git checkout branch-without-paths
+~/my-repo $ ls
+bash_scripts Dockerfile .gitignore
+
 ~/my-repo $ cx -a
 
 ~/my-repo $ ls src/deep/into/the/module/space/SomeObscureClassWithLongName.code
 src/deep/into/the/module/space/SomeObscureClassWithLongName.code
-
 ~/my-repo $ ls src/deep/into/another/part/of/the/module/space/SomeEvenMoreObscureClassWithLongName.code
 src/deep/into/another/part/of/the/module/space/SomeEvenMoreObscureClassWithLongName.code
 ```
@@ -33,6 +35,7 @@ def best_code():
 
 # cut
 ~/my-repo $ cx some/module_with_many_files
+
 ~/my-repo $ git checkout .
 
 # *make changes*..
@@ -63,6 +66,7 @@ def best_code():
 ~/repo4 $ cx bash_scripts/deployment
 
 ~/new-repo $ cx -a
+
 ~/new-repo $ tree .
 .
 └── src
