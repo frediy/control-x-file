@@ -18,6 +18,9 @@ bash_scripts Dockerfile .gitignore
 
 ~/my-repo $ cx -a
 
+~/my-repo $ ls
+bash_scripts src Dockerfile .gitignore
+
 ~/my-repo $ ls src/deep/into/the/module/space/SomeObscureClassWithLongName.code
 src/deep/into/the/module/space/SomeObscureClassWithLongName.code
 ~/my-repo $ ls src/deep/into/another/part/of/the/module/space/SomeEvenMoreObscureClassWithLongName.code
