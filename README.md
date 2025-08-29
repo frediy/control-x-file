@@ -1,10 +1,9 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/frediy/control-x-file)](https://goreportcard.com/report/github.com/frediy/control-x-file)
 
 # control-x-file
-CLI clipboard tool for cutting and pasting paths and subdirs with exact restoration.
+CLI clipboard tool for cutting and pasting paths and subdirs with exact restoration. Cut, paste, back up, compose and restore paths with a single command `cx`.
 
-No need to remember paths that no longer exist when calling `git restore`. Avoid accidentally combining paths incorrectly  with `cp -r` due to a rogue "/".
-
+No need to remember paths that no longer exist when calling `git restore`. Avoid accidentally combining paths incorrectly  with `cp -r` due to a rogue "/" or dir vs. file path.
 
 **Use case: Restore hard to remember files fast**
 ```bash
@@ -22,7 +21,6 @@ src/deep/into/the/module/space/SomeObscureClassWithLongName.code
 ~/my-repo $ ls src/deep/into/another/part/of/the/module/space/SomeEvenMoreObscureClassWithLongName.code
 src/deep/into/another/part/of/the/module/space/SomeEvenMoreObscureClassWithLongName.code
 ```
-
 
 **Use case: Quick reset**
 ```bash
